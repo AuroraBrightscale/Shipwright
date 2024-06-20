@@ -30,6 +30,7 @@ int Playthrough_Init(uint32_t seed, std::set<RandomizerCheck> excludedLocations,
     StartPerformanceTimer(PT_REGION_RESET);
     Regions::AccessReset();
     StopPerformanceTimer(PT_REGION_RESET);
+    ctx->GetSettings()->HandleRandomSettings();
 
     ctx->GetSettings()->FinalizeSettings(excludedLocations, enabledTricks);
     // once the settings have been finalized turn them into a string for hashing

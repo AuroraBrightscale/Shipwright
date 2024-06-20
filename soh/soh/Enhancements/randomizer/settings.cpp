@@ -2043,6 +2043,370 @@ void Settings::UpdateOptionProperties() {
     }
 }
 
+void Settings::HandleRandomSettings() {
+    RandomizeWorldSettings();
+    RandomizeItemSettings();
+}
+
+int Settings::RandomDistribution(std::initializer_list<uint8_t> balanceDistribution) {
+    if (balanceDistribution.size() == 0) {
+        throw std::invalid_argument("Random distribution must not be empty");
+    }
+    if (balanceDistribution.size() % 2 != 0) {
+        throw std::invalid_argument("Random distribution must be an even sized array.");
+    }
+
+    auto randNum = Random(0, 100);
+    auto current = 0;
+    for (auto i = 0; i < balanceDistribution.size(); i += 2) {
+        auto itemToPick = *(std::begin(balanceDistribution) + i);
+        auto chance = *(std::begin(balanceDistribution) + i + 1);
+        if (randNum < chance + current)
+            return itemToPick;
+        else
+            current += chance;
+    }
+}
+
+int Settings::RandomizeItemCount(int max, int setNumberCount, std::initializer_list<uint8_t> balanceDistribution) {
+    //auto balanceOption = CVarGetInteger("gRandomDungeonSettingsBalancing", RO_COUNT_BALANCE_BALANCED);
+    //switch (balanceOption) {
+    //    case RO_COUNT_BALANCE_BALANCED:
+            return RandomDistribution(balanceDistribution); //Subtract one since this goes into SetSelectedIndex, so we need the option's index, not the value itself.
+        //case RO_COUNT_BALANCE_MOST_ITEMS:
+        //    return setNumberCount;
+        //case RO_COUNT_BALANCE_ALL_ITEMS:
+        //    return max;
+        //case RO_COUNT_BALANCE_ANYTHING:
+        //    return Random(0, max + 1);
+    //}
+}
+
+void Settings::RandomizeWorldSettings() {
+    // Area Access
+    mOptions[RSK_KAK_GATE].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_DOOR_OF_TIME].SetSelectedIndex(Random(0, 3));
+    mOptions[RSK_ZORAS_FOUNTAIN].SetSelectedIndex(Random(0, 3));
+
+    // World Settings
+    mOptions[RSK_STARTING_AGE].SetSelectedIndex(
+        mOptions[RSK_DOOR_OF_TIME].Is(RO_DOOROFTIME_CLOSED) ? RO_AGE_CHILD : Random(0, 2));
+    mOptions[RSK_GERUDO_FORTRESS].SetSelectedIndex(Random(0, 3));
+    mOptions[RSK_RAINBOW_BRIDGE].SetSelectedIndex(Random(0, 8));
+    // For "constant settings" option:
+    mOptions[RSK_RAINBOW_BRIDGE_STONE_COUNT].SetSelectedIndex(RandomizeItemCount(3, 2, {
+        1, 10,
+        2, 45,
+        3, 45,
+    }));
+    mOptions[RSK_RAINBOW_BRIDGE_MEDALLION_COUNT].SetSelectedIndex(RandomizeItemCount(6, 4, {
+        3, 10,
+        4, 30,
+        5, 30,
+        6, 30,
+    }));
+    mOptions[RSK_RAINBOW_BRIDGE_REWARD_COUNT].SetSelectedIndex(RandomizeItemCount(9, 6, {
+        5, 10,
+        6, 20,
+        7, 40,
+        8, 20,
+        9, 10,
+    }));
+    mOptions[RSK_RAINBOW_BRIDGE_DUNGEON_COUNT].SetSelectedIndex(RandomizeItemCount(8, 6, {
+        4, 10,
+        5, 20,
+        6, 40,
+        7, 20,
+        8, 10,
+    }));
+    mOptions[RSK_RAINBOW_BRIDGE_TOKEN_COUNT].SetSelectedIndex(RandomizeItemCount(50, 30, {
+        20, 10,
+        25, 15,
+        30, 15,
+        35, 20,
+        40, 15,
+        45, 15,
+        50, 10,
+    }));
+    mOptions[RSK_BRIDGE_OPTIONS].SetSelectedIndex(Random(0, 3));
+    // Add one on if Greg is required
+    if (mOptions[RSK_BRIDGE_OPTIONS].Is(RO_BRIDGE_GREG_REWARD)) {
+        mOptions[RSK_RAINBOW_BRIDGE_STONE_COUNT].SetSelectedIndex(
+            mOptions[RSK_RAINBOW_BRIDGE_STONE_COUNT].GetSelectedOptionIndex() + 1
+        );
+        mOptions[RSK_RAINBOW_BRIDGE_MEDALLION_COUNT].SetSelectedIndex(
+            mOptions[RSK_RAINBOW_BRIDGE_MEDALLION_COUNT].GetSelectedOptionIndex() + 1
+        );
+        mOptions[RSK_RAINBOW_BRIDGE_REWARD_COUNT].SetSelectedIndex(
+            mOptions[RSK_RAINBOW_BRIDGE_REWARD_COUNT].GetSelectedOptionIndex() + 1
+        );
+    }
+
+    mOptions[RSK_TRIFORCE_HUNT].SetSelectedIndex(Random(0, 3) == 0 ? 1 : 0);
+
+    if (mOptions[RSK_TRIFORCE_HUNT].Is(true)) {
+        mOptions[RSK_TRIFORCE_HUNT_PIECES_REQUIRED].SetSelectedIndex(RandomizeItemCount(35, 20, {
+            5, 10,
+            10, 15,
+            15, 15,
+            20, 20,
+            25, 15,
+            30, 15,
+            35, 10,
+        }) - 1);
+        mOptions[RSK_TRIFORCE_HUNT_PIECES_TOTAL].SetSelectedIndex(
+            (size_t)std::round(mOptions[RSK_TRIFORCE_HUNT_PIECES_REQUIRED].GetSelectedOptionIndex() * 1.5)
+        );
+    }
+
+    // Shuffle Entrances
+    mOptions[RSK_SHUFFLE_DUNGEON_ENTRANCES].SetSelectedIndex(
+        RandomDistribution({ 
+            RO_DUNGEON_ENTRANCE_SHUFFLE_OFF, 50, 
+            RO_DUNGEON_ENTRANCE_SHUFFLE_ON, 25,
+            RO_DUNGEON_ENTRANCE_SHUFFLE_ON_PLUS_GANON, 25 
+        })
+    );
+    mOptions[RSK_SHUFFLE_BOSS_ENTRANCES].SetSelectedIndex(Random(0, 3));
+    //mOptions[RSK_SHUFFLE_OVERWORLD_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_INTERIOR_ENTRANCES].SetSelectedIndex(
+        RandomDistribution({ 
+            RO_INTERIOR_ENTRANCE_SHUFFLE_OFF, 50, 
+            RO_INTERIOR_ENTRANCE_SHUFFLE_SIMPLE, 25,
+            RO_INTERIOR_ENTRANCE_SHUFFLE_ALL, 25 
+        })
+    );
+    mOptions[RSK_SHUFFLE_GROTTO_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_OWL_DROPS].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_WARP_SONGS].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_OVERWORLD_SPAWNS].SetSelectedIndex(Random(0, 2));
+    //mOptions[RSK_MIXED_ENTRANCE_POOLS].SetSelectedIndex(1);
+    //mOptions[RSK_MIX_DUNGEON_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    //mOptions[RSK_MIX_OVERWORLD_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    //mOptions[RSK_MIX_INTERIOR_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    //mOptions[RSK_MIX_GROTTO_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    //mOptions[RSK_DECOUPLED_ENTRANCES].SetSelectedIndex(
+    //    Random(0, 2)
+    //    //mOptions[RSK_ALLOW_DECOUPLED_ENTRANCES].Is(RO_GENERIC_ON) ? Random(0, 2) : RO_GENERIC_OFF
+    //);
+
+    mOptions[RSK_SHUFFLE_ENTRANCES].SetSelectedIndex(
+        (
+            mOptions[RSK_SHUFFLE_DUNGEON_ENTRANCES].Is(RO_GENERIC_OFF) ||
+            mOptions[RSK_SHUFFLE_BOSS_ENTRANCES].Is(RO_GENERIC_OFF) ||
+            mOptions[RSK_SHUFFLE_OVERWORLD_ENTRANCES].Is(true) ||
+            mOptions[RSK_SHUFFLE_INTERIOR_ENTRANCES].Is(RO_GENERIC_OFF) ||
+            mOptions[RSK_SHUFFLE_GROTTO_ENTRANCES].Is(true) ||
+            mOptions[RSK_SHUFFLE_OWL_DROPS].Is(true) ||
+            mOptions[RSK_SHUFFLE_WARP_SONGS].Is(true) ||
+            mOptions[RSK_SHUFFLE_OVERWORLD_SPAWNS].Is(true) 
+        ) ? true
+        : false
+    );
+
+    // Figure out forest state
+    auto canBeClosedForest =
+        mOptions[RSK_SHUFFLE_ENTRANCES].Is(false) && mOptions[RSK_STARTING_AGE].Is(RO_AGE_CHILD);
+
+    mOptions[RSK_FOREST].SetSelectedIndex(canBeClosedForest ? Random(0, 3) : Random(0, 2) + 1);
+}
+
+void Settings::RandomizeItemSettings() {
+    // Shuffle Items
+    mOptions[RSK_SHUFFLE_SONGS].SetSelectedIndex(Random(0, 3));
+    mOptions[RSK_SHUFFLE_TOKENS].SetSelectedIndex(Random(0, 3));
+    mOptions[RSK_STARTING_KOKIRI_SWORD].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_KOKIRI_SWORD].SetSelectedIndex(
+        mOptions[RSK_STARTING_KOKIRI_SWORD].Is(true) ? true : Random(0, 2)
+    );
+    mOptions[RSK_SHUFFLE_MASTER_SWORD].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_CHILD_WALLET].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_OCARINA].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_OCARINA_BUTTONS].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_SWIM].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_WEIRD_EGG].SetSelectedIndex(
+        mOptions[RSK_SKIP_CHILD_ZELDA].Is(true) ? 0 : Random(0, 2)
+    );
+    mOptions[RSK_SHUFFLE_GERUDO_MEMBERSHIP_CARD].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_FISHING_POLE].SetSelectedIndex(Random(0, 2));
+
+    // Shuffle NPCs and merchants
+    mOptions[RSK_SHOPSANITY].SetSelectedIndex(Random(0, 7));
+    mOptions[RSK_SHOPSANITY_PRICES].SetSelectedIndex(Random(0, 5));
+    mOptions[RSK_SHOPSANITY_PRICES_AFFORDABLE].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_SCRUBS].SetSelectedIndex(Random(0, 4));
+    mOptions[RSK_SHUFFLE_BEEHIVES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_COWS].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_MAGIC_BEANS].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_MERCHANTS].SetSelectedIndex(Random(0, 3));
+    mOptions[RSK_SHUFFLE_FROG_SONG_RUPEES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_ADULT_TRADE].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_100_GS_REWARD].SetSelectedIndex(
+        false
+        //mOptions[RSK_ALLOW_100_GS_REWARD].Is(RO_GENERIC_ON) ? Random(0, 2) : RO_GENERIC_OFF
+    );
+    mOptions[RSK_SHUFFLE_BOSS_SOULS].SetSelectedIndex(Random(0, 3));
+
+    // Shuffle Dungeon Rewards
+    mOptions[RSK_SHUFFLE_DUNGEON_REWARDS].SetSelectedIndex(Random(0, 4));
+    mOptions[RSK_SHUFFLE_MAPANDCOMPASS].SetSelectedIndex(Random(0, 6));
+    mOptions[RSK_KEYSANITY].SetSelectedIndex(Random(0, 6));
+    mOptions[RSK_KEYRINGS].SetSelectedIndex(Random(0, 3)); // Exclude RO_KEYRINGS_SELECTION
+    mOptions[RSK_KEYRINGS_RANDOM_COUNT].SetSelectedIndex(
+        mOptions[RSK_GERUDO_FORTRESS].Is(RO_GF_NORMAL) && !mOptions[RSK_GERUDO_KEYS].Is(RO_GERUDO_KEYS_VANILLA)
+            ? 9
+            : 8
+    );
+    mOptions[RSK_GERUDO_KEYS].SetSelectedIndex(Random(0, 4));
+    mOptions[RSK_BOSS_KEYSANITY].SetSelectedIndex(Random(0, 6));
+
+    if (mOptions[RSK_TRIFORCE_HUNT].Is(false)) {
+        mOptions[RSK_GANONS_BOSS_KEY].SetSelectedIndex(Random(0, 12));
+        mOptions[RSK_LACS_STONE_COUNT].SetSelectedIndex(RandomizeItemCount(3, 2, {
+            1, 10,
+            2, 45,
+            3, 45,
+        }));
+        mOptions[RSK_LACS_MEDALLION_COUNT].SetSelectedIndex(RandomizeItemCount(6, 4, {
+            3, 10,
+            4, 30,
+            5, 30,
+            6, 30,
+        }));
+        mOptions[RSK_LACS_REWARD_COUNT].SetSelectedIndex(RandomizeItemCount(9, 6, {
+            5, 10,
+            6, 20,
+            7, 40,
+            8, 20,
+            9, 10,
+        }));
+        mOptions[RSK_LACS_DUNGEON_COUNT].SetSelectedIndex(RandomizeItemCount(8, 6, {
+            4, 10,
+            5, 20,
+            6, 40,
+            7, 20,
+            8, 10,
+        }));
+        mOptions[RSK_LACS_TOKEN_COUNT].SetSelectedIndex(RandomizeItemCount(50, 30, {
+            20, 10,
+            25, 15,
+            30, 15,
+            35, 20,
+            40, 15,
+            45, 15,
+            50, 10,
+        }));
+        mOptions[RSK_LACS_OPTIONS].SetSelectedIndex(Random(0, 3));
+        // Add one on if Greg is required
+        if (mOptions[RSK_LACS_OPTIONS].Is(RO_LACS_GREG_REWARD)) {
+            mOptions[RSK_LACS_STONE_COUNT].SetSelectedIndex(
+                mOptions[RSK_LACS_STONE_COUNT].GetSelectedOptionIndex() + 1
+            );
+            mOptions[RSK_LACS_MEDALLION_COUNT].SetSelectedIndex(
+                mOptions[RSK_LACS_MEDALLION_COUNT].GetSelectedOptionIndex() + 1
+            );
+            mOptions[RSK_LACS_REWARD_COUNT].SetSelectedIndex(
+                mOptions[RSK_LACS_REWARD_COUNT].GetSelectedOptionIndex() + 1
+            );
+        }
+    } else {
+        mOptions[RSK_GANONS_BOSS_KEY].SetSelectedIndex(RO_GANON_BOSS_KEY_TRIFORCE_HUNT); //Triforce hunt
+    }
+}
+
+//void Settings::RandomizeGameplaySettings() {
+//    // Timesavers
+//    mOptions[RSK_CUCCO_COUNT].SetSelectedIndex(Random(0, 8));
+//    mOptions[RSK_BIG_POE_COUNT].SetSelectedIndex(Random(0, 10) + 1);
+//    mOptions[RSK_SKIP_CHILD_ZELDA].SetSelectedIndex(Random(0, 2));
+//    cvarSettings[RSK_SKIP_CHILD_STEALTH] =
+//        cvarSettings[RSK_SKIP_CHILD_ZELDA] == 1 ? 1 : cvarSettings[RSK_SKIP_CHILD_STEALTH];
+//    mOptions[RSK_SKIP_EPONA_RACE].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_SKIP_TOWER_ESCAPE].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_COMPLETE_MASK_QUEST].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_SKIP_SCARECROWS_SONG].SetSelectedIndex(Random(0, 2));
+//
+//    // Item Pool and Hints
+//    mOptions[RSK_ITEM_POOL].SetSelectedIndex(Random(0, 4));
+//    mOptions[RSK_ICE_TRAPS].SetSelectedIndex(Random(0, 5));
+//    mOptions[RSK_GOSSIP_STONE_HINTS].SetSelectedIndex(Random(0, 4));
+//    mOptions[RSK_HINT_CLARITY].SetSelectedIndex(Random(0, 3));
+//    mOptions[RSK_HINT_DISTRIBUTION].SetSelectedIndex(Random(0, 4));
+//    mOptions[RSK_TOT_ALTAR_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_GANONDORF_LIGHT_ARROWS_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_DAMPES_DIARY_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_GREG_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_WARP_SONG_HINTS].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_SARIA_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_FROGS_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_SCRUB_TEXT_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_KAK_10_SKULLS_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_KAK_20_SKULLS_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_KAK_30_SKULLS_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_KAK_40_SKULLS_HINT].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_KAK_50_SKULLS_HINT].SetSelectedIndex(Random(0, 2));
+//
+//    // Additional Features
+//    mOptions[RSK_FULL_WALLETS].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_BOMBCHUS_IN_LOGIC].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_ENABLE_BOMBCHU_DROPS].SetSelectedIndex(cvarSettings[RSK_BOMBCHUS_IN_LOGIC]);
+//    mOptions[RSK_BLUE_FIRE_ARROWS].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_SUNLIGHT_ARROWS].SetSelectedIndex(Random(0, 2));
+//}
+//
+//void Settings::RandomizeInventorySettings() {
+//    // Starting Equipment
+//
+//    mOptions[RSK_STARTING_DEKU_SHIELD].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_STARTING_KOKIRI_SWORD].SetSelectedIndex(Random(0, 2));
+//
+//    // Starting Items
+//    mOptions[RSK_STARTING_OCARINA].SetSelectedIndex(Random(0, 2));
+//    mOptions[RSK_STARTING_CONSUMABLES].SetSelectedIndex(Random(0, 2));
+//
+//    // Starting songs
+//    std::array<RandomizerSettingKey, 12> songs{
+//        RSK_STARTING_ZELDAS_LULLABY,    RSK_STARTING_EPONAS_SONG,        RSK_STARTING_SARIAS_SONG,
+//        RSK_STARTING_SUNS_SONG,         RSK_STARTING_SONG_OF_TIME,       RSK_STARTING_SONG_OF_STORMS,
+//        RSK_STARTING_MINUET_OF_FOREST,  RSK_STARTING_BOLERO_OF_FIRE,     RSK_STARTING_SERENADE_OF_WATER,
+//        RSK_STARTING_REQUIEM_OF_SPIRIT, RSK_STARTING_NOCTURNE_OF_SHADOW, RSK_STARTING_PRELUDE_OF_LIGHT,
+//    };
+//    int numberToRandomize, numberAdded = 0;
+//    auto randomizationType = CVarGetInteger("gRandomizeSongsType", RO_SONG_COUNT_RANDOM);
+//    if (randomizationType == RO_SONG_COUNT_SET_NUMBER) {
+//        numberToRandomize = CVarGetInteger("gRandomizeSongsCount", 0);
+//    } else {
+//        numberToRandomize = Random(0, 13);
+//    }
+//    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+//    std::shuffle(songs.begin(), songs.end(), std::default_random_engine(seed));
+//
+//    for (auto key : songs) {
+//        if (numberAdded < numberToRandomize) {
+//            mOptions[key].SetSelectedIndex(RO_GENERIC_ON);
+//            numberAdded++;
+//        } else {
+//            mOptions[key].SetSelectedIndex(RO_GENERIC_OFF);
+//        }
+//    }
+//}
+//
+//// TODO move to rando refactor
+//void Settings::RandomizeDependentSettings() {
+//    // Handle shuffle ocarina/start with ocarina
+//    if (options.randomizeItemSettings && options.randomizeStartingInventorySettings) {
+//        auto shuffleOption = Random(0, 4);
+//        mOptions[RSK_SHUFFLE_OCARINA].SetSelectedIndex(shuffleOption < 2 ? RO_GENERIC_ON : RO_GENERIC_OFF);
+//        mOptions[RSK_STARTING_OCARINA].SetSelectedIndex(shuffleOption % 2 == 0 ? RO_GENERIC_ON : RO_GENERIC_OFF);
+//    }
+//
+//    if (options.randomizeStartingInventorySettings) {
+//        mOptions[RSK_LINKS_POCKET].SetSelectedIndex(cvarSettings[RSK_SHUFFLE_DUNGEON_REWARDS] != RO_DUNGEON_REWARDS_END_OF_DUNGEON)
+//                                             ? Random(0, 4)
+//                                             : RO_LINKS_POCKET_DUNGEON_REWARD;
+//    }
+//}
+
 void Settings::FinalizeSettings(const std::set<RandomizerCheck>& excludedLocations, const std::set<RandomizerTrick>& enabledTricks) {
     const auto ctx = Rando::Context::GetInstance();
     if (!ctx->IsSpoilerLoaded()) {

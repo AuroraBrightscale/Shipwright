@@ -169,6 +169,12 @@ class Settings {
     void UpdateOptionProperties();
 
     /**
+     * @brief Handles all settings to be randomized. After this method is called, the settings
+     * object should have no random settings at all.
+    */
+    void HandleRandomSettings();
+
+    /**
      * @brief Runs before seed generation to ensure all options are compatible with each
      * other and resolve options that have been set to random (such as random trial count,
      * or starting age).
@@ -195,6 +201,13 @@ class Settings {
      * @brief Create the list of description strings for `Option`s.
      */
     void CreateOptionDescriptions();
+    int RandomDistribution(std::initializer_list<uint8_t> balanceDistribution);
+    int RandomizeItemCount(int max, int setNumberCount, std::initializer_list<uint8_t> balanceDistribution);
+    void RandomizeWorldSettings();
+    void RandomizeItemSettings();
+    //void RandomizeGameplaySettings();
+    //void RandomizeInventorySettings();
+    //void RandomizeDependentSettings();
     std::array<Option, RSK_MAX> mOptions = {};
     std::array<std::string, RSK_MAX> mOptionDescriptions = {};
     std::array<OptionGroup, RSG_MAX> mOptionGroups = {};
