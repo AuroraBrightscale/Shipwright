@@ -315,7 +315,7 @@ OTRGlobals::OTRGlobals() {
         OOT_PAL_GC_DBG2
     };
 
-    context = Ship::Context::CreateUninitializedInstance("Ship of Harkinian", appShortName, "shipofharkinian.json");
+    context = Ship::Context::CreateUninitializedInstance("Ship of Harkinian (Random Settings Build 20240710)", appShortName, "shipofharkinian.json");
 
     context->InitLogging();
     context->InitGfxDebugger();

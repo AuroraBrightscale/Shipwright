@@ -2168,7 +2168,7 @@ void Settings::RandomizeWorldSettings() {
         })
     );
     mOptions[RSK_SHUFFLE_BOSS_ENTRANCES].SetSelectedIndex(Random(0, 3));
-    //mOptions[RSK_SHUFFLE_OVERWORLD_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_SHUFFLE_OVERWORLD_ENTRANCES].SetSelectedIndex(Random(0, 2));
     mOptions[RSK_SHUFFLE_INTERIOR_ENTRANCES].SetSelectedIndex(
         RandomDistribution({ 
             RO_INTERIOR_ENTRANCE_SHUFFLE_OFF, 50, 
@@ -2180,11 +2180,11 @@ void Settings::RandomizeWorldSettings() {
     mOptions[RSK_SHUFFLE_OWL_DROPS].SetSelectedIndex(Random(0, 2));
     mOptions[RSK_SHUFFLE_WARP_SONGS].SetSelectedIndex(Random(0, 2));
     mOptions[RSK_SHUFFLE_OVERWORLD_SPAWNS].SetSelectedIndex(Random(0, 2));
-    //mOptions[RSK_MIXED_ENTRANCE_POOLS].SetSelectedIndex(1);
-    //mOptions[RSK_MIX_DUNGEON_ENTRANCES].SetSelectedIndex(Random(0, 2));
-    //mOptions[RSK_MIX_OVERWORLD_ENTRANCES].SetSelectedIndex(Random(0, 2));
-    //mOptions[RSK_MIX_INTERIOR_ENTRANCES].SetSelectedIndex(Random(0, 2));
-    //mOptions[RSK_MIX_GROTTO_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_MIXED_ENTRANCE_POOLS].SetSelectedIndex(1);
+    mOptions[RSK_MIX_DUNGEON_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_MIX_OVERWORLD_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_MIX_INTERIOR_ENTRANCES].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_MIX_GROTTO_ENTRANCES].SetSelectedIndex(Random(0, 2));
     //mOptions[RSK_DECOUPLED_ENTRANCES].SetSelectedIndex(
     //    Random(0, 2)
     //    //mOptions[RSK_ALLOW_DECOUPLED_ENTRANCES].Is(RO_GENERIC_ON) ? Random(0, 2) : RO_GENERIC_OFF
@@ -2230,10 +2230,29 @@ void Settings::RandomizeItemSettings() {
     mOptions[RSK_SHUFFLE_GERUDO_MEMBERSHIP_CARD].SetSelectedIndex(Random(0, 2));
     mOptions[RSK_SHUFFLE_FISHING_POLE].SetSelectedIndex(Random(0, 2));
 
+    // TODO move to dependent settings section
+    if (mOptions[RSK_SHUFFLE_FISHING_POLE].Is(false)) {
+        mOptions[RSK_FISHING_POLE_HINT].SetSelectedIndex(0);
+    }
+
     // Shuffle NPCs and merchants
     mOptions[RSK_SHOPSANITY].SetSelectedIndex(Random(0, 7));
     mOptions[RSK_SHOPSANITY_PRICES].SetSelectedIndex(Random(0, 5));
     mOptions[RSK_SHOPSANITY_PRICES_AFFORDABLE].SetSelectedIndex(Random(0, 2));
+    mOptions[RSK_FISHSANITY].SetSelectedIndex(Random(0, 4));
+    mOptions[RSK_FISHSANITY_POND_COUNT].SetSelectedIndex(
+        RandomizeItemCount(
+            17, 
+            5, 
+            {
+                2, 17,
+                4, 33,
+                6, 33,
+                8, 17,
+            }
+        )
+    );
+    mOptions[RSK_FISHSANITY_AGE_SPLIT].SetSelectedIndex(Random(0, 2));
     mOptions[RSK_SHUFFLE_SCRUBS].SetSelectedIndex(Random(0, 4));
     mOptions[RSK_SHUFFLE_BEEHIVES].SetSelectedIndex(Random(0, 2));
     mOptions[RSK_SHUFFLE_COWS].SetSelectedIndex(Random(0, 2));
