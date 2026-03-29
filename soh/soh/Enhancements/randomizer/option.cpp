@@ -3,6 +3,7 @@
 #include <Context.h>
 #include <imgui.h>
 #include "soh/UIWidgets.hpp"
+#include "3drando/random.hpp"
 
 namespace Rando {
 Option Option::Bool(std::string name_, std::vector<std::string> options_, const OptionCategory category_,
@@ -20,9 +21,9 @@ Option Option::Bool(std::string name_, std::string cvarName_, std::string descri
 
 Option Option::U8(std::string name_, std::vector<std::string> options_, const OptionCategory category_,
                   std::string cvarName_, std::string description_, WidgetType widgetType_, const uint8_t defaultOption_,
-                  const bool defaultHidden_, int imFlags_) {
+                  const bool defaultHidden_, int imFlags_, RandomDistribution dist) {
     return {static_cast<uint8_t>(0), std::move(name_), std::move(options_), category_, std::move(cvarName_),
-                  std::move(description_), widgetType_, defaultOption_, defaultHidden_, imFlags_};
+                  std::move(description_), widgetType_, defaultOption_, defaultHidden_, imFlags_, dist};
 }
 
 Option Option::LogicTrick(std::string name_) {
@@ -84,6 +85,10 @@ void Option::SetFromCVar() {
 
 void Option::SetDelayedOption() {
     delayedSelection = contextSelection;
+}
+
+void Option::Shuffle() {
+    SetSelectedIndex(distribution.Randomize());
 }
 
 void Option::RestoreDelayedOption() {
@@ -189,10 +194,10 @@ void Option::SetContextIndexFromText(const std::string text) {
 
 Option::Option(uint8_t var_, std::string name_, std::vector<std::string> options_, OptionCategory category_,
                std::string cvarName_, std::string description_, WidgetType widgetType_, uint8_t defaultOption_,
-               bool defaultHidden_, int imFlags_)
+               bool defaultHidden_, int imFlags_, RandomDistribution dist)
     : var(var_), name(std::move(name_)), options(std::move(options_)), category(category_),
       cvarName(std::move(cvarName_)), description(std::move(description_)), widgetType(widgetType_),
-      defaultOption(defaultOption_), defaultHidden(defaultHidden_), imFlags(imFlags_) {
+      defaultOption(defaultOption_), defaultHidden(defaultHidden_), imFlags(imFlags_), distribution(dist) {
     menuSelection = contextSelection = defaultOption;
     hidden = defaultHidden;
     PopulateTextToNum();
@@ -512,4 +517,38 @@ bool OptionGroup::RenderImGui() const { // NOLINT(*-no-recursion)
     ImGui::EndDisabled();
     return changed;
 }
+
+DistOption::DistOption(const float chance, const uint8_t option) : chance(chance), option(option) {
+}
+
+const float DistOption::GetChance() const {
+    return chance;
+}
+
+const uint8_t DistOption::GetOption() const {
+    return option;
+}
+
+RandomDistribution::RandomDistribution(const std::vector<const DistOption> distribution) : distribution(distribution) {
+    if (distribution.size() == 0) {
+        throw std::invalid_argument("Random distribution must not be empty");
+    }
+}
+
+RandomDistribution::RandomDistribution() : distribution({ DistOption(0.5, 0), DistOption(0.5, 1) }) {
+}
+
+uint8_t RandomDistribution::Randomize() {
+    auto randNum = RandomDouble();
+    double current = 0;
+    for (auto distOption : distribution) {
+        if (randNum < distOption.GetChance() + current) {
+            return distOption.GetOption();
+        } else {
+            current += distOption.GetChance();
+        }
+    }
+    throw std::exception("Randomize setting fell through");
+}
+
 } // namespace Rando

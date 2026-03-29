@@ -13,6 +13,41 @@
 #include "tricks.h"
 
 namespace Rando {
+
+class DistOption {
+  public:
+    DistOption(const float chance, const uint8_t option);
+    const float GetChance() const;
+    const uint8_t GetOption() const;
+
+  private:
+    const float chance;
+    const uint8_t option;
+};
+
+class RandomDistribution {
+  public:
+    /**
+     * @brief Creates a distribution based on the given distribution parameters.
+     * @param distribution The distribution of the chance for each option to happen. All the chances must sum to 1.
+     */
+    RandomDistribution(const std::vector<const DistOption> distribution);
+
+    /**
+     * @brief Constructs a boolean random distribution.
+     */
+    RandomDistribution();
+
+    /**
+     * @brief Randomizes the option, returning a value based on the given distribution.
+     * @return The randomized option.
+     */
+    uint8_t Randomize();
+
+  private:
+    const std::vector<const DistOption> distribution;
+}
+;
 enum ImGuiMenuFlags {
   IMFLAG_NONE = 0,
   IMFLAG_SEPARATOR_BOTTOM = 1 << 0, /** Adds a padded separator below the widget. */
@@ -111,12 +146,20 @@ class Option {
      * @param defaultOption_ The default index that should be selected.
      * @param defaultHidden_ Whether or not to display the option (can be changed at runtime later).
      * @param imFlags_ (see ImGuiMenuFlags type) flags that can modify how this option is rendered.
+     * @param dist The random distrubution to use for randomizing this option.
      * @return Option
      */
-    static Option U8(std::string name_, std::vector<std::string> options_,
-                     OptionCategory category_ = OptionCategory::Setting, std::string cvarName_ = "",
-                     std::string description_ = "", WidgetType widgetType_ = WidgetType::Combobox,
-                     uint8_t defaultOption_ = 0, bool defaultHidden_ = false, int imFlags_ = IMFLAG_SEPARATOR_BOTTOM);
+    static Option U8(std::string name_, 
+        std::vector<std::string> options_,
+        OptionCategory category_ = OptionCategory::Setting, 
+        std::string cvarName_ = "",
+        std::string description_ = "", 
+        WidgetType widgetType_ = WidgetType::Combobox,
+        uint8_t defaultOption_ = 0, 
+        bool defaultHidden_ = false, 
+        int imFlags_ = IMFLAG_SEPARATOR_BOTTOM,
+        RandomDistribution dist = RandomDistribution()
+    );
 
     /**
      * @brief A convenience function for constructing the Option for a trick.
@@ -222,6 +265,14 @@ class Option {
     void SetDelayedOption();
 
     /**
+     * @brief Shuffle the option's value/index to a randomized value tied to the seed.
+     * TODO This should fail/do nothing if the option is not marked as randomizable, nor if
+     * the user hasn't marked it to be randomized.
+     * TODO This should respect/the type of randomization being done.
+     */
+    void Shuffle();
+
+    /**
      * @brief Restores the delayedOption back to the selected index.
      */
     void RestoreDelayedOption();
@@ -310,7 +361,7 @@ class Option {
 protected:
     Option(uint8_t var_, std::string name_, std::vector<std::string> options_, OptionCategory category_,
            std::string cvarName_, std::string description_, WidgetType widgetType_, uint8_t defaultOption_,
-           bool defaultHidden_, int imFlags_);
+         bool defaultHidden_, int imFlags_, RandomDistribution dist);
     Option(bool var_, std::string name_, std::vector<std::string> options_, OptionCategory category_,
            std::string cvarName_, std::string description_, WidgetType widgetType_, uint8_t defaultOption_,
            bool defaultHidden_, int imFlags_);
@@ -339,6 +390,7 @@ protected:
     UIWidgets::CheckboxGraphics disabledGraphic = UIWidgets::CheckboxGraphics::Cross;
     std::string disabledText;
     std::unordered_map<std::string, uint8_t> optionsTextToVar = {};
+    RandomDistribution distribution;
 };
 
 class TrickOption : public Option {

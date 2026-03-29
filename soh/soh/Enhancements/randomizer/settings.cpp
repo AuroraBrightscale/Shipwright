@@ -2048,31 +2048,11 @@ void Settings::HandleRandomSettings() {
     RandomizeItemSettings();
 }
 
-int Settings::RandomDistribution(std::initializer_list<uint8_t> balanceDistribution) {
-    if (balanceDistribution.size() == 0) {
-        throw std::invalid_argument("Random distribution must not be empty");
-    }
-    if (balanceDistribution.size() % 2 != 0) {
-        throw std::invalid_argument("Random distribution must be an even sized array.");
-    }
-
-    auto randNum = Random(0, 100);
-    auto current = 0;
-    for (auto i = 0; i < balanceDistribution.size(); i += 2) {
-        auto itemToPick = *(std::begin(balanceDistribution) + i);
-        auto chance = *(std::begin(balanceDistribution) + i + 1);
-        if (randNum < chance + current)
-            return itemToPick;
-        else
-            current += chance;
-    }
-}
-
 int Settings::RandomizeItemCount(int max, int setNumberCount, std::initializer_list<uint8_t> balanceDistribution) {
     //auto balanceOption = CVarGetInteger("gRandomDungeonSettingsBalancing", RO_COUNT_BALANCE_BALANCED);
     //switch (balanceOption) {
     //    case RO_COUNT_BALANCE_BALANCED:
-            return RandomDistribution(balanceDistribution); //Subtract one since this goes into SetSelectedIndex, so we need the option's index, not the value itself.
+            // return RandomDistribution(balanceDistribution); //Subtract one since this goes into SetSelectedIndex, so we need the option's index, not the value itself.
         //case RO_COUNT_BALANCE_MOST_ITEMS:
         //    return setNumberCount;
         //case RO_COUNT_BALANCE_ALL_ITEMS:
